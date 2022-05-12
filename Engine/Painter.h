@@ -8,22 +8,34 @@ class Painter
 {
 public:
 	Painter() = default;
+	Painter(Graphics& gfx)
+		:
+		gfx(gfx)
+	{
+
+	}
 	~Painter()
 	{
 		delete[] _pixelPosAry;
 	}
 
-	void Update(Graphics& gfx,float const deltatime)
+	void Update(float const deltatime)
 	{		
 		GUI();
-		UpdataPixelPosAry(deltatime, gfx);
-		GetData(gfx);
+		UpdataPixelPosAry(deltatime);
+		GetData();
 		
-		if (_isGetData && Bound(*_pixelPosAry, gfx))
+		if (_isGetData && Bound(*_pixelPosAry))
 		{			
 			Paint();			
 		}
 	}
+
+	const int GetMaxPixel()const
+	{
+		return gfx.ScreenWidth * gfx.ScreenHeight;
+	}
+
 	void Init(bool& isInit)
 	{
 		if (!isInit)
@@ -32,7 +44,8 @@ public:
 			_pixelPosAry = new Vei2[_canvasSize.x * _canvasSize.y];
 		}		
 	}
-	void GraphDebug(Graphics& gfx)
+
+	void GraphDebug()
 	{
 		for (int x = 0; x < 50; x++)
 		{
@@ -42,7 +55,7 @@ public:
 			}
 		}
 	}
-	void UpdataPixelPosAry(float const deltatime, Graphics& gfx)
+	void UpdataPixelPosAry(float const deltatime)
 	{
 		Init(_isInit);
 		
@@ -52,19 +65,44 @@ public:
 		if (timeSave > 0.018f)
 		{
 			timeSave = 0;
-			Dy_canvasSize = _canvasSize;
-			GraphDebug(gfx);
+			_Dy_canvasSize = _canvasSize;
+			GraphDebug();
 		}
 	}
 
-	void BaseDraw(Graphics& gfx)
+	void BaseDraw()
 	{
-		MainDraw(_canvasSize, _pixelPosAry,gfx);
+		MainDraw(_canvasSize, _pixelPosAry);
 	}
 	void SetCanvasSize(Vei2& canvasSize)
-	{
-		_canvasSize = canvasSize;
+	{		
+		if (canvasSize.x < 0)
+		{
+			_canvasSize.x = 0;
+		}
+		else if (canvasSize.x > gfx.ScreenWidth)
+		{
+			_canvasSize.x = gfx.ScreenWidth;
+		}
+		else
+		{
+			_canvasSize.x = canvasSize.x;
+		}
+
+		if (canvasSize.y < 0)
+		{
+			_canvasSize.y = 0;
+		}
+		else if (canvasSize.y > gfx.ScreenHeight)
+		{
+			_canvasSize.y = gfx.ScreenWidth;
+		}
+		else
+		{
+			_canvasSize.y = canvasSize.y;
+		}
 	}
+
 	const Vei2 GetCanvasSize()
 	{
 	 	return _canvasSize;
@@ -74,11 +112,11 @@ private:
 	{
 
 	}
-	void GetData(Graphics& gfx)
+	void GetData()
 	{
-		GetPixelPos(_canvasSize, _pixelPosAry, gfx);
+		GetPixelPos(_canvasSize, _pixelPosAry);
 	}
-	void GetPixelPos(Vei2 canvasSize, Vei2* pixelPosAry, Graphics& gfx)
+	void GetPixelPos(Vei2 canvasSize, Vei2* pixelPosAry)
 	{
 		int startPos_X = (gfx.ScreenWidth - canvasSize.x) / 2;
 		int endPos_X = startPos_X + canvasSize.x;
@@ -95,7 +133,7 @@ private:
 			}
 		}
 	}
-	bool Bound(Vei2 screenPos, Graphics& gfx)
+	bool Bound(Vei2 screenPos)
 	{
 		if (screenPos.x > 0 && screenPos.x < gfx.ScreenWidth)
 		{
@@ -103,19 +141,30 @@ private:
 			{
 				return true;
 			}
+			else
+			{
+				return false;
+			}
+		}
+		else
+		{
+			return false;
 		}
 	}
 	void Paint()
 	{
 
 	}
-	void MainDraw(Vei2 canvasSize, Vei2* pixelPosAry, Graphics& gfx)
+	void MainDraw(Vei2 canvasSize, Vei2* pixelPosAry)
 	{
 		int size = canvasSize.x * canvasSize.y;
 		Vei2* pixelPosAryEnd = pixelPosAry + size;
 		while (pixelPosAry < pixelPosAryEnd)
 		{
-			gfx.PutPixel(pixelPosAry->x, pixelPosAry->y, Colors::White);
+			if (Bound(Vei2(pixelPosAry->x, pixelPosAry->y)))
+			{
+				gfx.PutPixel(pixelPosAry->x, pixelPosAry->y, Colors::White);
+			}			
 			pixelPosAry++;
 		}
 	}
@@ -123,8 +172,8 @@ private:
 	bool _isInit = false;
 	bool _isGetData = true;
 	Vei2 _canvasSize = Vei2(1,1);
-	Vei2 Dy_canvasSize;
+	Vei2 _Dy_canvasSize;
 	Vei2* _pixelPosAry;
-	
+	Graphics& gfx;
 };
 

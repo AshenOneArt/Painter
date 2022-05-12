@@ -22,10 +22,11 @@
 #include "Game.h"
 #include "Vei2.h"
 
-Game::Game( MainWindow& wnd )
+Game::Game(MainWindow& wnd)
 	:
-	wnd( wnd ),
-	gfx( wnd )
+	wnd(wnd),
+	gfx(wnd),
+	painter(gfx)
 {
 }
 
@@ -40,11 +41,11 @@ void Game::Go()
 void Game::UpdateModel()
 {
 	deltatime = Mytime.DeltaTime();
-	painter.SetCanvasSize(Vei2(400,200));
-	painter.Update(gfx, deltatime);
+	painter.SetCanvasSize(Vei2(600,400));
+	painter.Update(deltatime);
 }
 
 void Game::ComposeFrame()
 {
-	painter.BaseDraw(gfx);
+	painter.BaseDraw();
 }
