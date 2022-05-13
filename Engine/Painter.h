@@ -8,9 +8,10 @@ class Painter
 {
 public:
 	Painter() = default;
-	Painter(Graphics& gfx)
+	Painter(Graphics& gfx, MainWindow& wnd)
 		:
-		gfx(gfx)
+		gfx(gfx),
+		wnd(wnd)
 	{
 
 	}
@@ -21,9 +22,15 @@ public:
 
 	void Update(float const deltatime)
 	{		
+		Init(_isInit);
 		GUI();
-		UpdataPixelPosAry(deltatime);
-		GetData();
+		GetGUIDate();
+		if (!_isTemporaryDraw)
+		{
+			UpdataPixelPosAry(deltatime);
+			PosAryGetData();
+		}
+		
 		
 		if (_isGetData && Bound(*_pixelPosAry))
 		{			
@@ -35,7 +42,6 @@ public:
 	{
 		return gfx.ScreenWidth * gfx.ScreenHeight;
 	}
-
 	void Init(bool& isInit)
 	{
 		if (!isInit)
@@ -57,15 +63,9 @@ public:
 	}
 	void UpdataPixelPosAry(float const deltatime)
 	{
-		Init(_isInit);
-		
-		float timeSave = 0;
-		timeSave += deltatime;
-
-		if (timeSave > 0.018f)
+		if (_isMoveGUI)
 		{
-			timeSave = 0;
-			_Dy_canvasSize = _canvasSize;
+			_pixelPosAry = new Vei2[_canvasSize.x * _canvasSize.y];
 			GraphDebug();
 		}
 	}
@@ -108,11 +108,75 @@ public:
 	 	return _canvasSize;
 	}
 private:
+	void DrawBox(Vei2 size, Vei2 pos)
+	{
+		Vei2 MaxPos = pos + size;
+		Vei2 MinPos = pos;
+		if (Bound(MaxPos) && Bound(MinPos))
+		{
+			for (int x = 0; x < size.x; x++)
+			{
+				for (int y = 0; y < size.y; y++)
+				{
+
+					gfx.PutPixel(x + pos.x, y + pos.y, Colors::White);
+
+				}
+			}
+		}		
+	}
+	bool GUIinterface_Click(Vei2 size, Vei2 const pos)const
+	{
+		Vei2 mousePos = Vei2(wnd.mouse.GetPosX(), wnd.mouse.GetPosY());
+
+		if (mousePos.x >= pos.x && mousePos.y >= pos.y && mousePos.x <= pos.x + size.x && mousePos.y <= pos.y + size.y)
+		{
+			if (wnd.mouse.LeftIsPressed())
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else
+		{
+			return false;
+		}
+	}
+	void MoveGUI(Vei2 size,Vei2& pos)
+	{
+		if (GUIinterface_Click(size, pos))
+		{
+			_isMoveGUI = true;						
+		}
+		if (_isMoveGUI)
+		{
+			if (wnd.mouse.LeftIsPressed())
+			{
+				pos.x = wnd.mouse.GetPosX();
+			}
+			else
+			{
+				_isMoveGUI = false;
+			}
+				
+		}
+		
+	}
 	void GUI()
 	{
-
+		DrawBox(Vei2(12, 30), _slide);
+		MoveGUI(Vei2(12, 30), _slide);
 	}
-	void GetData()
+	void GetGUIDate()
+	{
+		int slideValue;
+		slideValue = _slide.x - _slideInit.x;				
+		SetCanvasSize(Vei2(_canvasSizeInit.x + slideValue * 2, _canvasSizeInit.y + slideValue));
+	}
+	void PosAryGetData()
 	{
 		GetPixelPos(_canvasSize, _pixelPosAry);
 	}
@@ -135,9 +199,9 @@ private:
 	}
 	bool Bound(Vei2 screenPos)
 	{
-		if (screenPos.x > 0 && screenPos.x < gfx.ScreenWidth)
+		if (screenPos.x >= 0 && screenPos.x <= gfx.ScreenWidth)
 		{
-			if (screenPos.y > 0 && screenPos.y < gfx.ScreenHeight)
+			if (screenPos.y >= 0 && screenPos.y <= gfx.ScreenHeight)
 			{
 				return true;
 			}
@@ -155,25 +219,49 @@ private:
 	{
 
 	}
-	void MainDraw(Vei2 canvasSize, Vei2* pixelPosAry)
+	void MainDraw(Vei2 canvasSize,Vei2* pixelPosAry)
 	{
-		int size = canvasSize.x * canvasSize.y;
-		Vei2* pixelPosAryEnd = pixelPosAry + size;
-		while (pixelPosAry < pixelPosAryEnd)
+		if (_isTemporaryDraw)
 		{
-			if (Bound(Vei2(pixelPosAry->x, pixelPosAry->y)))
+			int startPos_X = (gfx.ScreenWidth - canvasSize.x) / 2;
+			int endPos_X = startPos_X + canvasSize.x;
+
+			int startPos_Y = (gfx.ScreenHeight - canvasSize.y) / 2;
+			int endPos_Y = startPos_Y + canvasSize.y;
+
+			for (int x = startPos_X; x < endPos_X; x++)
 			{
-				gfx.PutPixel(pixelPosAry->x, pixelPosAry->y, Colors::White);
-			}			
-			pixelPosAry++;
+				for (int y = startPos_Y; y < endPos_Y; y++, pixelPosAry++)
+				{
+					gfx.PutPixel(x,y,Colors::White);
+				}
+			}
 		}
+		else
+		{
+			int size = canvasSize.x * canvasSize.y;
+			Vei2* pixelPosAryEnd = pixelPosAry + size;
+			while (pixelPosAry < pixelPosAryEnd)
+			{
+				if (Bound(Vei2(pixelPosAry->x, pixelPosAry->y)))
+				{
+					gfx.PutPixel(pixelPosAry->x, pixelPosAry->y, Colors::White);
+				}
+				pixelPosAry++;
+			}
+		}	
 	}
 private:
 	bool _isInit = false;
 	bool _isGetData = true;
-	Vei2 _canvasSize = Vei2(1,1);
-	Vei2 _Dy_canvasSize;
+	bool _isMoveGUI = false;
+	bool _isTemporaryDraw = true;
+	Vei2 _canvasSize = Vei2(400,250);
+	const Vei2 _canvasSizeInit = _canvasSize;
 	Vei2* _pixelPosAry;
 	Graphics& gfx;
+	MainWindow& wnd;
+	Vei2 _slide = Vei2(400, 20);
+	const Vei2 _slideInit = _slide;
 };
 

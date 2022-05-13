@@ -26,7 +26,7 @@ Game::Game(MainWindow& wnd)
 	:
 	wnd(wnd),
 	gfx(wnd),
-	painter(gfx)
+	painter(gfx,wnd)
 {
 }
 
@@ -41,7 +41,7 @@ void Game::Go()
 void Game::UpdateModel()
 {
 	deltatime = Mytime.DeltaTime();
-	painter.SetCanvasSize(Vei2(600,400));
+	
 	painter.Update(deltatime);
 }
 
