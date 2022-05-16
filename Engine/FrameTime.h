@@ -18,5 +18,15 @@ public:
 		Start = Now;
 		return time;
 	}
+	void Delay(float time)
+	{
+		const auto Now = std::chrono::steady_clock::now();
+		std::chrono::duration<float> deltatime = std::chrono::steady_clock::now() - Now;
 
+		while (deltatime.count() < time)
+		{
+			deltatime = std::chrono::steady_clock::now() - Now;
+		}
+		
+	}
 };

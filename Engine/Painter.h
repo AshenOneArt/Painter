@@ -65,11 +65,50 @@ public:
 		{
 			UpdataPixelPosAry(deltatime);
 			PosAryGetData();
-			Paint(_pixelObj);
+			Paint(_pixelObj,10);
 		}
 		
 	}
+	void Paint(Pixel* pixelObj, int size)
+	{
+		Pixel* pixelPosAryEnd = pixelObj + GetCanvasArySize();
+		Pixel* initSave = pixelObj;
+		Vei2 mousePos;
+		mousePos.x = wnd.mouse.GetPosX();
+		mousePos.y = wnd.mouse.GetPosY();
+		Vei2 brushPos;
+		brushPos.x = mousePos.x - size;
+		brushPos.y = mousePos.y - size;
+		if (wnd.mouse.LeftIsPressed())
+		{
+			while (pixelObj < pixelPosAryEnd)
+			{
+				
+				for (int x = brushPos.x; x < brushPos.x + (size * 2 + 1); x++)
+				{
+					for (int y = brushPos.y; y < brushPos.y + (size * 2 + 1); y++)
+					{
+						if (x == pixelObj->GetPos().x && y == pixelObj->GetPos().y)
+						{
+							pixelObj->SetCol(Colors::Black);
+							/*for (int i = 0; i < size; i++)
+							{
+								pixelObj--;
+								pixelObj->SetCol(Colors::Black);
+							}
+							
+							for (int i = 0; i < size; i++)
+							{
+								pixelObj++;
+							}*/
+						}
+					}
+				}
+				pixelObj += size;
+			}
 
+		}
+	}
 	const int GetMaxPixel()const
 	{
 		return gfx.ScreenWidth * gfx.ScreenHeight;
@@ -321,26 +360,7 @@ private:
 			return false;
 		}
 	}
-	void Paint(Pixel* pixelObj)
-	{
-		Pixel* pixelPosAryEnd = pixelObj + GetCanvasArySize();
-		Vei2 mousePos;
-		mousePos.x = wnd.mouse.GetPosX();
-		mousePos.y = wnd.mouse.GetPosY();
-		while (pixelObj < pixelPosAryEnd)
-		{
-			if (wnd.mouse.LeftIsPressed())
-			{
-				if (pixelObj->GetPos().x == mousePos.x && pixelObj->GetPos().y == mousePos.y)
-				{
-					pixelObj->SetCol(Colors::Black);
-				}
-				//pixelObj->SetCol(Colors::Cyan);
-			}
-			
-			pixelObj++;
-		}
-	}
+	
 	
 private:
 	bool _isInit = false;
