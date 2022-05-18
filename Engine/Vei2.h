@@ -13,6 +13,14 @@ public:
 	Vei2& operator-=(const Vei2& rhs);
 	Vei2 operator/(int rhs) const;
 	Vei2& operator/=(int rhs);
+	bool operator==(const Vei2& rhs) const
+	{
+		return (x == rhs.x && y == rhs.y);
+	}
+	bool operator!=(const Vei2& rhs) const
+	{
+		return (x != rhs.x || y != rhs.y);
+	}
 	float GetLength() const;
 	int GetLengthSq() const;
 public:

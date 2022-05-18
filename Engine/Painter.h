@@ -57,19 +57,60 @@ public:
 		Init(_isInit);
 		GUI();
 		GetGUIDate();
-		std::stringstream strStream;
-		strStream << "canvasSize.x:" << _canvasSize.x <<"\t" << "canvasSize.x:" << _canvasSize.y << std::endl;
-		OutputDebugStringA(strStream.str().c_str());
-
 		if (!_isTemporaryDraw)
 		{
 			UpdataPixelPosAry(deltatime);
 			PosAryGetData();
-			Paint(_pixelObj,10);
+			Paint(_pixelObj,0,1);
+			GetOffsetPixelObj(_pixelObj,-1, -1);
 		}
 		
 	}
-	void Paint(Pixel* pixelObj, int size)
+
+	void LinearSample(Pixel* pixelObj, Vei2* ary_2)
+	{
+		static int i;
+		i++;
+		if (i > 2)
+		{
+			i = 0;
+		}
+		else if(i==1)
+		{
+			*ary_2 = pixelObj->GetPos();	
+		}
+		else if (i == 2)
+		{
+			*(ary_2+1) = pixelObj->GetPos();
+		}
+	}
+	void  LinearInterpolation(Vei2* ary_2)
+	{
+		auto diffValue = *(ary_2 + 1) - *ary_2;
+		std::stringstream stream;
+		stream << "diffValue X :  " << diffValue.x << "   " << "diffValue X :  " << diffValue.y << std::endl;
+		OutputDebugStringA(stream.str().c_str());
+		if (std::abs(diffValue.x) > 0 || std::abs(diffValue.y) > 0)
+		{
+			Vei2 InterpolationPos = Vei2(ary_2->x + diffValue.x, ary_2->y + diffValue.y);
+
+		}
+	}
+	void GetOffsetPixelObj(Pixel* pixelObj,int x,int y)
+	{
+		Pixel* InitPointer = pixelObj;
+		Pixel* pixelPosAryEnd = pixelObj + y + _canvasSize.y * x;
+		if (pixelPosAryEnd > InitPointer + GetCanvasArySize())
+		{
+			pixelPosAryEnd = InitPointer + GetCanvasArySize()-1;
+		}
+		else if (pixelPosAryEnd < InitPointer)
+		{
+			pixelPosAryEnd = InitPointer;
+		}
+		pixelPosAryEnd->SetCol(Colors::Black);
+	}
+	void Paint(Pixel* pixelObj, int size,int jumpPointer )
 	{
 		Pixel* pixelPosAryEnd = pixelObj + GetCanvasArySize();
 		Pixel* initSave = pixelObj;
@@ -79,35 +120,61 @@ public:
 		Vei2 brushPos;
 		brushPos.x = mousePos.x - size;
 		brushPos.y = mousePos.y - size;
+		static bool LeftIsPressed;
+		
+
+
 		if (wnd.mouse.LeftIsPressed())
 		{
 			while (pixelObj < pixelPosAryEnd)
-			{
-				
+			{				
 				for (int x = brushPos.x; x < brushPos.x + (size * 2 + 1); x++)
 				{
 					for (int y = brushPos.y; y < brushPos.y + (size * 2 + 1); y++)
 					{
 						if (x == pixelObj->GetPos().x && y == pixelObj->GetPos().y)
 						{
-							pixelObj->SetCol(Colors::Black);
-							/*for (int i = 0; i < size; i++)
+							if (pixelObj != initSave)
 							{
-								pixelObj--;
+								if (!LeftIsPressed)
+								{
+									LeftIsPressed = true;
+									*Ary_2 = pixelObj->GetPos();
+									*(Ary_2 + 1) = pixelObj->GetPos();
+									OutputDebugStringA("Init\n");
+								}
 								pixelObj->SetCol(Colors::Black);
+								LinearSample(pixelObj, &Ary_2[0]);
+								std::stringstream stream;
+								stream << "ary0 X  :  " << Ary_2->x << "    " << "ary0 Y  :  " << Ary_2->y << std::endl;
+								stream << "ary1 X  :  " << (Ary_2 + 1)->x << "    " << "ary1 Y  :  " << (Ary_2 + 1)->y << std::endl;
+								//OutputDebugStringA(stream.str().c_str());
+
+								LinearInterpolation(&Ary_2[0]);
+								/*for (int i = 0; i < jumpPointer; i++)
+								{
+									pixelObj--;
+									pixelObj->SetCol(Colors::Black);
+								}
+
+								for (int i = 0; i < jumpPointer; i++)
+								{
+									pixelObj++;
+								}*/
 							}
 							
-							for (int i = 0; i < size; i++)
-							{
-								pixelObj++;
-							}*/
 						}
 					}
 				}
-				pixelObj += size;
+				pixelObj += jumpPointer;
 			}
 
 		}
+		else
+		{
+			LeftIsPressed = false;
+		}
+		
 	}
 	const int GetMaxPixel()const
 	{
@@ -280,7 +347,21 @@ private:
 			MoveGUI(Vei2(12, 30), _slide);
 			DrawBox(Vei2(60, 25), Vei2(735, 5), Color(200, 50, 50));
 			DrawBox(Vei2(60, 25), Vei2(735, 35), Color(50, 200, 50));
-		}				
+		}		
+		else
+		{
+			DrawBox(Vei2(60, 25), Vei2(735, 550), Color(50, 200, 50));
+		}
+		
+	}
+	void ResetCanvas(Pixel* pixelobj)
+	{
+		Pixel* pixelPosAryEnd = pixelobj + GetCanvasArySize();
+		while (pixelobj < pixelPosAryEnd)
+		{
+			pixelobj->SetCol(Colors::White);
+			pixelobj++;
+		}
 	}
 	void GetGUIDate()
 	{
@@ -303,7 +384,10 @@ private:
 		{
 			_isTemporaryDraw = false;
 		}
-
+		if (GUIinterface_Click(Vei2(60, 25), Vei2(735, 550)))
+		{
+			ResetCanvas(_pixelObj);
+		}
 	}
 	void PosAryGetData()
 	{
@@ -371,7 +455,10 @@ private:
 	bool _isHeapAryInit = false;
 	Vei2 _canvasSize = Vei2(400,250);
 	const Vei2 _canvasSizeInit = _canvasSize;
+	
 	Vei2* _pixelPosAry = nullptr;
+	Vei2 Ary_2[2];
+
 	Graphics& gfx;
 	MainWindow& wnd;
 	Vei2 _slide = Vei2(400, 20);
