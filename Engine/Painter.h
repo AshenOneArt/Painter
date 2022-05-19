@@ -61,8 +61,8 @@ public:
 		{
 			UpdataPixelPosAry(deltatime);
 			PosAryGetData();
-			Paint(_pixelObj,0,1);
-			GetOffsetPixelObj(_pixelObj,-1, -1);
+			Paint(_pixelObj,1,1);
+			//GetOffsetPixelObj(_pixelObj,399, 100);
 		}
 		
 	}
@@ -84,16 +84,37 @@ public:
 			*(ary_2+1) = pixelObj->GetPos();
 		}
 	}
-	void  LinearInterpolation(Vei2* ary_2)
+	void  LinearInterpolation(Pixel* pixelObj,const Vei2* ary_2,const int size)
 	{
 		auto diffValue = *(ary_2 + 1) - *ary_2;
 		std::stringstream stream;
+		Vei2 mousePos;
+		mousePos.x = wnd.mouse.GetPosX();
+		mousePos.y = wnd.mouse.GetPosY();
+		Vei2 brushPos;
+		brushPos.x = mousePos.x - size;
+		brushPos.y = mousePos.y - size;
 		stream << "diffValue X :  " << diffValue.x << "   " << "diffValue X :  " << diffValue.y << std::endl;
 		OutputDebugStringA(stream.str().c_str());
 		if (std::abs(diffValue.x) > 0 || std::abs(diffValue.y) > 0)
 		{
-			Vei2 InterpolationPos = Vei2(ary_2->x + diffValue.x, ary_2->y + diffValue.y);
+			for (int x = 0; x < (size * 2 + 1); x++)
+			{
+				for (int y = 0; y < (size * 2 + 1); y++)
+				{
+					GetOffsetPixelObj(pixelObj, diffValue.x / 2 + x, diffValue.y / 2 + y);
 
+					GetOffsetPixelObj(pixelObj, diffValue.x / 4 + x, diffValue.y / 4 + y);
+					GetOffsetPixelObj(pixelObj, diffValue.x / 4 + diffValue.x / 2 + x, diffValue.y / 4 + diffValue.y / 2 + y);
+
+					GetOffsetPixelObj(pixelObj, diffValue.x / 8 + x, diffValue.y / 8 + y);
+					GetOffsetPixelObj(pixelObj, diffValue.x / 8 + diffValue.x / 4 + x, diffValue.y / 8 + diffValue.y / 4 + y);
+					GetOffsetPixelObj(pixelObj, diffValue.x / 8 + diffValue.x / 2 + x, diffValue.y / 8 + diffValue.y / 2 + y);
+					GetOffsetPixelObj(pixelObj, diffValue.x / 8 + diffValue.x / 1 + x, diffValue.y / 8 + diffValue.y / 1 + y);
+				}
+			}
+			//Vei2 InterpolationPos = Vei2(ary_2->x + diffValue.x, ary_2->y + diffValue.y);
+			
 		}
 	}
 	void GetOffsetPixelObj(Pixel* pixelObj,int x,int y)
@@ -150,7 +171,7 @@ public:
 								stream << "ary1 X  :  " << (Ary_2 + 1)->x << "    " << "ary1 Y  :  " << (Ary_2 + 1)->y << std::endl;
 								//OutputDebugStringA(stream.str().c_str());
 
-								LinearInterpolation(&Ary_2[0]);
+								LinearInterpolation(pixelObj ,&Ary_2[0], size);
 								/*for (int i = 0; i < jumpPointer; i++)
 								{
 									pixelObj--;
